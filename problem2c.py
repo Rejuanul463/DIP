@@ -2,22 +2,17 @@ import imageio.v2 as iio
 import numpy as np
 import matplotlib.pyplot as plt
 
-img = iio.imread("D:/RizwanDIP/cat.bmp")
-
+img = iio.imread("cat.bmp")
 size = 512
-im1 = [[0] * size for _ in range(size)]
-im2 = [[0] * size for _ in range(size)]
-im3 = [[0] * size for _ in range(size)]
 
 imMSB3 = [[0] * size for _ in range(size)]
 imDif = [[0] * size for _ in range(size)]
 
+shift = 8-3
+
 for i in range(size):
     for j in range(img.shape[1]):
-        im3[i][j] = img[i][j] & 32
-        im2[i][j] = img[i][j] & 64
-        im1[i][j] = img[i][j] & 128
-        imMSB3[i][j] = im1[i][j] + im2[i][j] + im3[i][j]
+        imMSB3[i][j] = (img[i][j] >> shift) << shift
         imDif[i][j] = img[i][j] - imMSB3[i][j]
 
 

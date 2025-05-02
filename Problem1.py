@@ -2,7 +2,7 @@ import imageio as iio
 import numpy as np
 import matplotlib.pyplot as plt
 
-img = iio.imread("D:\RizwanDIP\img.bmp")
+img = iio.imread("grayImg.bmp")
 img2 = img
 for i in range(10):
     for j in range(10):
