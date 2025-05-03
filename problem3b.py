@@ -1,10 +1,10 @@
 import random
-import imageio.v3 as iio
+import imageio
 import numpy as np
 import matplotlib.pyplot as plt
 import statistics
 
-img = iio.imread("grayImg.bmp")
+image = imageio.imread("grayImg.bmp", pilmode='L')
 size = 512
 
 def addNoise(imag):
@@ -19,7 +19,7 @@ def addNoise(imag):
     return imag
 
 
-img = addNoise(img)
+img = addNoise(image.copy())
 
 imgfive = img.copy()
 imgThree = img.copy()
@@ -52,8 +52,27 @@ def avgFilter():
             imgThree[i][j] = avarage(img, i, j, 0)
             imgSeven[i][j] = avarage(img, i, j, 2)
 
+def computePsnr(original, filtered):
+    original, filtered = np.float64(original), np.float64(filtered)
+    mse = np.mean((original - filtered) ** 2)
+
+    if(mse == 0):
+        return inf
+    else:
+        psnr = 20 * np.log10(255.0) - 10 * np.log10(mse)
+
+    return round(psnr, 2)
+
 
 avgFilter()
+
+psnr3 = computePsnr(image, imgThree)
+psnr5 = computePsnr(image, imgfive)
+psnr7 = computePsnr(image, imgSeven)
+
+print(psnr3)
+print(psnr5)
+print(psnr7)
 
 plt.figure(figsize=(16,16))
 plt.subplot(2,2,1)
