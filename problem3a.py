@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import statistics
 
-img = iio.imread("grayImg.bmp")
+image = iio.imread("grayImg.bmp", pilmode="L")
 size = 512
 
 def addNoise(imag):
@@ -20,10 +20,7 @@ def addNoise(imag):
     return imag
 
 
-img = addNoise(img)
-
-imgAvgFilter = img
-imgMedFilter = img
+img = addNoise(image.copy())
 
 def avarage(image , x , y):
     it = {-2, -1, 0, 1, 2}
@@ -45,7 +42,7 @@ def avgFilter(imag):
     return imag
 
 def findMediun(image , x , y):
-    it = {-2, -1, 0, 1, 2}
+    it = {-1, 0, 1}
     values = []
     for i in(it):
         for j in(it):
@@ -55,8 +52,7 @@ def findMediun(image , x , y):
                 values.append(image[ix][iy])
             else:
                 values.append(image[x][y])
-    # print(values)
-    return  values[int(len(values)/2)]
+    return  sorted(values)[int(len(values)/2)]
 
 def medianFilter(imag):
     for i in range(size):
@@ -64,21 +60,25 @@ def medianFilter(imag):
             imag[i][j] = findMediun(img, i, j)
     return imag
 
-imgAvgFilter = avgFilter(imgAvgFilter)
-imgMedFilter = medianFilter(imgMedFilter)
 
-def calculate_psnr(original, filtered):
-    mse = np.mean((original - filtered) ** 2)
+imgAvgFilter = avgFilter(img.copy())
+imgMedFilter = medianFilter(img.copy())
+
+
+def compute_psnr(image1, image2):
+    image1, image2 = np.float64(image1), np.float64(image2)
+    mse = np.mean((image1 - image2) ** 2)
     if mse == 0:
-        return float('inf')  # No noise
-    psnr = 10 * np.log10((255 ** 2) / mse)
-    return psnr
+        return float('inf')
+    psnr = 20 * np.log10(255.0) - 10 * np.log10(mse)
 
-psnr_avg = calculate_psnr(img, imgAvgFilter)
-psnr_median = calculate_psnr(img, imgMedFilter)
+    return round(psnr, 2)
 
-print(f"PSNR (Average Filter): {psnr_avg:.2f} dB")
-print(f"PSNR (Median Filter): {psnr_median:.2f} dB")
+psnr_avg = compute_psnr(image, imgAvgFilter)
+psnr_median = compute_psnr(image, imgMedFilter)
+
+print(psnr_avg)
+print(psnr_median)
 
 plt.figure(figsize=(16,16))
 plt.subplot(1,3,1)
