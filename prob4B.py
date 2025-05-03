@@ -1,34 +1,51 @@
-import random
-import cv2
-import imageio.v3 as iio
-import numpy as np
+import imageio
 import matplotlib.pyplot as plt
-import statistics
-
-img = iio.imread("grayImg.bmp", pilmode='L')
-size = 512
-
-def add_gaussian_noise(image, mean=0, std=25):
-    noise = np.random.normal(mean, std, image.shape).astype(np.float32)
-    noisy = image.astype(np.float32) + noise
-    noisy = np.clip(noisy, 0, 255).astype(np.uint8)
-    return noisy
-
-noisyImage = add_gaussian_noise(img.copy())
-
-dft = np.fft.fft2(noisyImage.copy())
-dft_shift = np.fft.fftshift(dft)
-magnitude_spectrum = 20 * np.log(np.abs(dft_shift) + 1)
+import numpy as np
 
 
+image = imageio.imread('character.tif')
+h,w = image.shape
+
+def applyIdealFilter(fftImage, radius):
+    low = np.zeros((h, w))
+
+    for u in range(h):
+        for v in range(w):
+            D = np.sqrt((u-h/2)**2 + (v-w/2)**2)
+            if(D <= radius):
+                low[u][v] = 1
+
+    lowPass = np.fft.ifft2(np.fft.ifftshift(fftImage * low))
+
+    return np.abs(lowPass)
+
+
+gausianNoise = np.random.normal(7, 13, image.shape).astype(np.uint8)
+noisyImage = image + gausianNoise
+
+noisyImageFFT = np.fft.fftshift(np.fft.fft2(noisyImage))
+
+idealLowPass10 = applyIdealFilter(noisyImageFFT.copy(), 10)
+idealLowPass20 = applyIdealFilter(noisyImageFFT.copy(), 20)
+idealLowPass30 = applyIdealFilter(noisyImageFFT.copy(), 30)
 
 plt.figure(figsize=(16,16))
-plt.subplot(2,2,1)
-plt.imshow(img, cmap='grey')
-plt.title('Original Image')
+plt.subplot(2,3,1)
+plt.imshow(image,cmap='grey')
 
-plt.subplot(2,2,2)
+plt.subplot(2,3,2)
 plt.imshow(noisyImage, cmap='grey')
-plt.title('Noisy Image')
+
+plt.subplot(2,3,3)
+plt.imshow(np.log(abs(noisyImageFFT)), cmap='grey')
+
+plt.subplot(2,3,4)
+plt.imshow(idealLowPass20, cmap='grey')
+
+plt.subplot(2,3,5)
+plt.imshow(idealLowPass30, cmap='grey')
+
+plt.subplot(2,3,6)
+plt.imshow(idealLowPass10, cmap='grey')
 
 plt.show()
