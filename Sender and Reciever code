@@ -16,13 +16,13 @@
 
 int main() {
 	// Enable Alternative function and GPIOA clock
-	RCC_APB2ENR |= 5; // for GPIOB 9
+	RCC_APB2ENR |= 5; // (for GPIOB 9 for USART3 in APB2ENR) (5 for both 1and2 in APB2ENR)
 
 	// Enable USART2 clock
-	RCC_APB1ENR |= (1<<17);
+	RCC_APB1ENR |= (1<<17); // (14 in RCC_APB2ENR for UART1) (18 in RCC_APB1ENR for USART3)
 
 	// Clear CRL
-	GPIOA_CRL &= ~(0xFFFFFFFF);
+	GPIOA_CRL &= ~(0xFFFFFFFF);  
 
 	// Configure PA2 as TX
 	GPIOA_CRL |= 0xB00;
