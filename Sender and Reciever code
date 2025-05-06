@@ -16,7 +16,7 @@
 
 int main() {
 	// Enable Alternative function and GPIOA clock
-	RCC_APB2ENR |= 5;
+	RCC_APB2ENR |= 5; // for GPIOB 9
 
 	// Enable USART2 clock
 	RCC_APB1ENR |= (1<<17);
