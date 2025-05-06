@@ -1,0 +1,114 @@
+//sender
+// Define the base of registers
+#define RCC_BASE 0x40021000
+#define GPIOA_BASE 0x40010800
+#define USART2_BASE 0x40004400
+
+//Define registers
+#define RCC_APB2ENR (*(volatile unsigned int *) (RCC_BASE + 0x18))
+#define RCC_APB1ENR (*(volatile unsigned int *) (RCC_BASE + 0x1C))
+#define GPIOA_CRL (*(volatile unsigned int *) (GPIOA_BASE + 0x00))
+#define USART2_BRR (*(volatile unsigned int *) (USART2_BASE + 0x08))
+#define USART2_CR1 (*(volatile unsigned int *) (USART2_BASE + 0x0C))
+#define USART2_SR (*(volatile unsigned int *) (USART2_BASE + 0x00))
+#define USART2_DR (*(volatile unsigned int *) (USART2_BASE + 0x04))
+
+
+int main() {
+	// Enable Alternative function and GPIOA clock
+	RCC_APB2ENR |= 5;
+
+	// Enable USART2 clock
+	RCC_APB1ENR |= (1<<17);
+
+	// Clear CRL
+	GPIOA_CRL &= ~(0xFFFFFFFF);
+
+	// Configure PA2 as TX
+	GPIOA_CRL |= 0xB00;
+	// Configure PA3 as RX
+	GPIOA_CRL |= 0x8000;
+
+	//Configure baud rate
+	int system_clock = 36000000;
+	int baud_rate = 9600;
+	USART2_BRR = (system_clock + (baud_rate/2))/baud_rate;  // rounding the USARTDIV
+
+	// Enable Transmitter and Receiver
+	USART2_CR1 |= 0xC;
+
+	// Enable USART
+	USART2_CR1 |= 1<<13;
+
+	// by default word length is 8 bit. nothing to changed
+
+	while(1) {
+		char chat = 'U';
+
+		while(!(USART2_SR&(1<<6))) {
+			//wait until previous transmission is completed.
+		}
+
+		USART2_DR = chat;
+
+	}
+	return 0;
+
+}
+
+//reciever
+#include<stdio.h>
+// Register's Bases
+#define RCC_BASE 0x40021000
+#define GPIOA_BASE 0x40010800
+#define USART2_BASE 0x40004400
+
+
+//Register's
+#define RCC_APB2ENR (*(volatile unsigned int *) (RCC_BASE + 0x18))
+#define RCC_APB1ENR (*(volatile unsigned int *) (RCC_BASE + 0x1C))
+#define GPIOA_CRL (*(volatile unsigned int *) (GPIOA_BASE + 0x00))
+#define USART2_SR (*(volatile unsigned int *) (USART2_BASE + 0x00))
+#define USART2_DR (*(volatile unsigned int *) (USART2_BASE + 0x04))
+#define USART2_BRR (*(volatile unsigned int *) (USART2_BASE + 0x08))
+#define USART2_CR1 (*(volatile unsigned int *) (USART2_BASE + 0x0C))
+
+int main() {
+	// Enable Alternative Function & GPIO clock
+	RCC_APB2ENR |= 5;
+
+	//Enable USART clock
+	RCC_APB1ENR |= 1<<17;
+
+	// CLEAR GPIOA_CRL
+	GPIOA_CRL &= ~(0xFFFFFFFF);
+
+	//Configure PA2 as TX and PA3 as RX
+	GPIOA_CRL |= 0xB00;
+	GPIOA_CRL |= 0x8000;
+
+	// Configure baud rate
+	int system_clock = 36000000;
+	int baud_rate = 9600;
+	USART2_BRR = (system_clock + (baud_rate/2))/baud_rate;
+
+	// Enable Transmitter and Receiver
+	USART2_CR1 |= 0x0C;
+
+	//Enable USART
+	USART2_CR1 |= 1<<13;
+
+	// Word length by default 8 bit. nothing need to be changed
+
+	while(1) {
+
+		while(!(USART2_SR & (1<<6))) {
+			//wait until previous transmission is not completed;
+			//Do nothing
+		}
+
+		char chat = USART2_DR;
+	}
+	return 0;
+
+}
