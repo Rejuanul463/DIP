@@ -1,0 +1,104 @@
+//sender
+// Define base addresses
+#define RCC_BASE        0x40021000
+#define GPIOA_BASE      0x40010800
+#define USART1_BASE     0x40013800
+
+// Define register pointers
+#define RCC_APB2ENR     (*(volatile unsigned int *) (RCC_BASE + 0x18))
+#define GPIOA_CRH       (*(volatile unsigned int *) (GPIOA_BASE + 0x04))
+#define USART1_SR       (*(volatile unsigned int *) (USART1_BASE + 0x00))
+#define USART1_DR       (*(volatile unsigned int *) (USART1_BASE + 0x04))
+#define USART1_BRR      (*(volatile unsigned int *) (USART1_BASE + 0x08))
+#define USART1_CR1      (*(volatile unsigned int *) (USART1_BASE + 0x0C))
+
+int main() {
+    // 1. Enable GPIOA and USART1 clocks
+    RCC_APB2ENR |= (1 << 2);   // Enable GPIOA clock (bit 2)
+    RCC_APB2ENR |= (1 << 14);  // Enable USART1 clock (bit 14)
+    RCC_APB2ENR |= (1 << 0);   // Enable AFIO (bit 0)
+
+    // 2. Configure PA9 (TX) as alternate function output push-pull
+    //    Configure PA10 (RX) as input with pull-up/down
+    GPIOA_CRH &= ~((0xF << 4) | (0xF << 8));  // Clear PA9 and PA10 config
+    GPIOA_CRH |= (0xB << 4);  // PA9 = 1011: AF output push-pull, 50 MHz
+    GPIOA_CRH |= (0x8 << 8);  // PA10 = 1000: input with pull-up/down
+
+    // 3. Set baud rate
+    int system_clock = 72000000;  // 72 MHz default for STM32F103C8T6
+    int baud_rate = 9600;
+    USART1_BRR = (system_clock + (baud_rate / 2)) / baud_rate;  // rounded division
+
+    // 4. Enable transmitter and receiver
+    USART1_CR1 |= (1 << 2) | (1 << 3);  // RE and TE
+
+    // 5. Enable USART1
+    USART1_CR1 |= (1 << 13);  // UE = USART enable
+
+    // 6. Send a character continuously
+    while (1) {
+        char ch = 'U';
+
+        // Wait until transmit data register is empty (TXE)
+        while (!(USART1_SR & (1 << 7)));
+
+        // Send the character
+        USART1_DR = ch;
+    }
+
+    return 0;
+}
+//reciever
+// Define base addresses
+#define RCC_BASE        0x40021000
+#define GPIOA_BASE      0x40010800
+#define USART1_BASE     0x40013800
+
+// Define register pointers
+#define RCC_APB2ENR     (*(volatile unsigned int *) (RCC_BASE + 0x18))
+#define GPIOA_CRH       (*(volatile unsigned int *) (GPIOA_BASE + 0x04))
+#define USART1_SR       (*(volatile unsigned int *) (USART1_BASE + 0x00))
+#define USART1_DR       (*(volatile unsigned int *) (USART1_BASE + 0x04))
+#define USART1_BRR      (*(volatile unsigned int *) (USART1_BASE + 0x08))
+#define USART1_CR1      (*(volatile unsigned int *) (USART1_BASE + 0x0C))
+
+int main() {
+    // 1. Enable GPIOA and USART1 clocks
+    RCC_APB2ENR |= (1 << 2);   // GPIOA clock enable
+    RCC_APB2ENR |= (1 << 14);  // USART1 clock enable
+    RCC_APB2ENR |= (1 << 0);   // AFIO clock enable
+
+    // 2. Configure PA9 (TX) and PA10 (RX)
+    GPIOA_CRH &= ~((0xF << 4) | (0xF << 8));  // Clear bits for PA9 and PA10
+    GPIOA_CRH |= (0xB << 4);  // PA9: Alternate function push-pull output
+    GPIOA_CRH |= (0x8 << 8);  // PA10: Input with pull-up/down
+
+    // 3. Set baud rate
+    int system_clock = 72000000;
+    int baud_rate = 9600;
+    USART1_BRR = (system_clock + (baud_rate / 2)) / baud_rate;
+
+    // 4. Enable receiver
+    USART1_CR1 |= (1 << 2);  // RE: Receiver enable
+
+    // 5. Enable USART
+    USART1_CR1 |= (1 << 13); // UE: USART enable
+
+    // 6. Receive characters in a loop
+    char received_char = 0;
+    while (1) {
+        // Wait until data is received (RXNE bit is set)
+        while (!(USART1_SR & (1 << 5)));
+
+        // Read received data
+        received_char = USART1_DR;
+
+        // You can place a breakpoint here or store the character
+        // Example: process or echo back the character
+        // (Optional) echo it back:
+        while (!(USART1_SR & (1 << 7))); // Wait for TXE
+        USART1_DR = received_char;
+    }
+
+    return 0;
+}
